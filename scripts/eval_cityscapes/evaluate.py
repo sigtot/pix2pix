@@ -4,9 +4,12 @@ import caffe
 import argparse
 import numpy as np
 import scipy.misc
+import scipy.io
 from PIL import Image
 from util import *
 from cityscapes import cityscapes
+import imageio
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--cityscapes_dir", type=str, required=True, help="Path to the original cityscapes dataset")
@@ -42,17 +45,21 @@ def main():
         # idx is city_shot_frame
         label = CS.load_label(args.split, city, idx)
         im_file = args.result_dir + '/' + idx + '_leftImg8bit.png' 
-        im = np.array(Image.open(im_file))
+        PIL_im = Image.open(im_file)
+        # PIL_im = PIL_im.resize((label.shape[1], label.shape[2]), Image.ANTIALIAS)
+        im = np.array(PIL_im)
         # im = scipy.misc.imresize(im, (256, 256))
-        im = scipy.misc.imresize(im, (label.shape[1], label.shape[2]))
+        # im = imresize(im, (label.shape[1], label.shape[2], 3))
+        #im = im.resize((label.shape[1], label.shape[2], 3), Image.ANTIALIAS)
+        # im = scipy.misc.imresize(im, (label.shape[1], label.shape[2]))
         out = segrun(net, CS.preprocess(im))
         hist_perframe += fast_hist(label.flatten(), out.flatten(), n_cl)
         if args.save_output_images > 0:
             label_im = CS.palette(label)
             pred_im = CS.palette(out)
-            scipy.misc.imsave(output_image_dir + '/' + str(i) + '_pred.jpg', pred_im)
-            scipy.misc.imsave(output_image_dir + '/' + str(i) + '_gt.jpg', label_im)
-            scipy.misc.imsave(output_image_dir + '/' + str(i) + '_input.jpg', im)
+            imageio.imwrite(output_image_dir + '/' + str(i) + '_pred.jpg', pred_im.astype(np.uint8))
+            imageio.imwrite(output_image_dir + '/' + str(i) + '_gt.jpg', label_im.astype(np.uint8))
+            imageio.imwrite(output_image_dir + '/' + str(i) + '_input.jpg', im.astype(np.uint8))
 
     mean_pixel_acc, mean_class_acc, mean_class_iou, per_class_acc, per_class_iou = get_scores(hist_perframe)
     with open(args.output_dir + '/evaluation_results.txt', 'w') as f:

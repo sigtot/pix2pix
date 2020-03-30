@@ -57,6 +57,7 @@ class cityscapes:
         The leading singleton dimension is required by the loss.
         """
         label = Image.open('{}/gtFine/{}/{}/{}_gtFine_labelIds.png'.format(self.dir, split, city, idx))
+        label = label.resize((256, 256))
         label = self.assign_trainIds(label)  # get proper labels for eval
         label = np.array(label, dtype=np.uint8)
         label = label[np.newaxis, ...]
