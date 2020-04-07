@@ -7,7 +7,7 @@ import scipy.misc
 import scipy.io
 from PIL import Image
 
-from scripts.eval_cityscapes.scipyold import imresize
+from scipyold import imresize
 from util import *
 from cityscapes import cityscapes
 import imageio

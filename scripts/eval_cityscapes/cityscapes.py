@@ -5,7 +5,7 @@ import glob
 import numpy as np
 from PIL import Image
 
-from scripts.eval_cityscapes.scipyold import imresize
+from scipyold import imresize
 
 
 class cityscapes:
