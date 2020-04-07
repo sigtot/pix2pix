@@ -5,6 +5,9 @@ import glob
 import numpy as np
 from PIL import Image
 
+from scripts.eval_cityscapes.scipyold import imresize
+
+
 class cityscapes:
     def __init__(self, data_path):
         # data_path something like /data2/cityscapes
@@ -57,9 +60,9 @@ class cityscapes:
         The leading singleton dimension is required by the loss.
         """
         label = Image.open('{}/gtFine/{}/{}/{}_gtFine_labelIds.png'.format(self.dir, split, city, idx))
-        label = label.resize((256, 256))
         label = self.assign_trainIds(label)  # get proper labels for eval
         label = np.array(label, dtype=np.uint8)
+        label = imresize(label, (256, 256))
         label = label[np.newaxis, ...]
         return label
 

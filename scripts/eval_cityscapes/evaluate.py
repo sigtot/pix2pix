@@ -6,6 +6,8 @@ import numpy as np
 import scipy.misc
 import scipy.io
 from PIL import Image
+
+from scripts.eval_cityscapes.scipyold import imresize
 from util import *
 from cityscapes import cityscapes
 import imageio
@@ -44,14 +46,10 @@ def main():
         city = idx.split('_')[0]
         # idx is city_shot_frame
         label = CS.load_label(args.split, city, idx)
+        # im = imresize(im, (256, 256))
         im_file = args.result_dir + '/' + idx + '_leftImg8bit.png' 
-        PIL_im = Image.open(im_file)
-        # PIL_im = PIL_im.resize((label.shape[1], label.shape[2]), Image.ANTIALIAS)
-        im = np.array(PIL_im)
-        # im = scipy.misc.imresize(im, (256, 256))
-        # im = imresize(im, (label.shape[1], label.shape[2], 3))
-        #im = im.resize((label.shape[1], label.shape[2], 3), Image.ANTIALIAS)
-        # im = scipy.misc.imresize(im, (label.shape[1], label.shape[2]))
+        im = np.array(Image.open(im_file))
+        im = imresize(im, (label.shape[1], label.shape[2]))
         out = segrun(net, CS.preprocess(im))
         hist_perframe += fast_hist(label.flatten(), out.flatten(), n_cl)
         if args.save_output_images > 0:
