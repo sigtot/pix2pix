@@ -12,9 +12,9 @@ class cityscapes:
     def __init__(self, data_path):
         # data_path something like /data2/cityscapes
         self.dir = data_path
-        self.classes = ['road', 'sidewalk', 'building', 'wall', 'fence', 
-                        'pole', 'traffic light', 'traffic sign', 'vegetation', 'terrain', 
-                        'sky', 'person', 'rider', 'car', 'truck', 
+        self.classes = ['road', 'sidewalk', 'building', 'wall', 'fence',
+                        'pole', 'traffic light', 'traffic sign', 'vegetation', 'terrain',
+                        'sky', 'person', 'rider', 'car', 'truck',
                         'bus', 'train', 'motorcycle', 'bicycle']
         self.mean = np.array((72.78044, 83.21195, 73.45286), dtype=np.float32)
         # import cityscapes label helper and set up label mappings
@@ -62,7 +62,7 @@ class cityscapes:
         label = Image.open('{}/gtFine/{}/{}/{}_gtFine_labelIds.png'.format(self.dir, split, city, idx))
         label = self.assign_trainIds(label)  # get proper labels for eval
         label = np.array(label, dtype=np.uint8)
-        label = imresize(label, (256, 256))
+        #label = imresize(label, (256, 256))
         label = label[np.newaxis, ...]
         return label
 

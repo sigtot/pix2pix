@@ -12,16 +12,21 @@ from util import *
 from cityscapes import cityscapes
 import imageio
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument("--cityscapes_dir", type=str, required=True, help="Path to the original cityscapes dataset")
 parser.add_argument("--result_dir", type=str, required=True, help="Path to the generated images to be evaluated")
 parser.add_argument("--output_dir", type=str, required=True, help="Where to save the evaluation results")
-parser.add_argument("--caffemodel_dir", type=str, default='./scripts/eval_cityscapes/caffemodel/', help="Where the FCN-8s caffemodel stored")
+parser.add_argument("--caffemodel_dir", type=str, default='./scripts/eval_cityscapes/caffemodel/',
+                    help="Where the FCN-8s caffemodel stored")
 parser.add_argument("--gpu_id", type=int, default=0, help="Which gpu id to use")
 parser.add_argument("--split", type=str, default='val', help="Data split to be evaluated")
 parser.add_argument("--save_output_images", type=int, default=0, help="Whether to save the FCN output images")
+parser.add_argument("--ground_truth", type=int, default=0,
+                    help="Whether this is a ground truth comparison and images should be center cropped like the training images")
+parser.add_argument("--fcn_input_size", type=int, default=710,
+                    help="The (square) size images will be cropped to before they are fed into the FCN")
 args = parser.parse_args()
+
 
 def main():
     if not os.path.isdir(args.output_dir):
@@ -46,10 +51,30 @@ def main():
         city = idx.split('_')[0]
         # idx is city_shot_frame
         label = CS.load_label(args.split, city, idx)
+        # label = imresize(label, (400, 800))
         # im = imresize(im, (256, 256))
-        im_file = args.result_dir + '/' + idx + '_leftImg8bit.png' 
+        im_file = args.result_dir + '/' + idx + '_leftImg8bit.png'
         im = np.array(Image.open(im_file))
+
+        # Ground truth: center crop like is done to generated imgs
+        size_1 = 286
+        size_2 = 256
+        im = imresize(im, (size_1, size_1))
+        cc_d = (size_1 - size_2) // 2
+        im = im[cc_d:-cc_d, cc_d:-cc_d]
+
+        # Center crop label with same proportion
+        cc_d_l_y = int(cc_d * label.shape[1] / size_2)
+        cc_d_l_x = int(cc_d * label.shape[2] / size_2)
+        label = label[:, cc_d_l_y:-cc_d_l_y, cc_d_l_x:-cc_d_l_x]
+
+        # Scale up to label size
         im = imresize(im, (label.shape[1], label.shape[2]))
+
+        # Crop label and im to fit in GPU memory
+        in_size = 700
+        im = im[:in_size, :in_size]
+        label = label[:, :in_size, :in_size]
         out = segrun(net, CS.preprocess(im))
         hist_perframe += fast_hist(label.flatten(), out.flatten(), n_cl)
         if args.save_output_images > 0:
@@ -69,4 +94,6 @@ def main():
             while len(cl) < 15:
                 cl = cl + ' '
             f.write('%s: acc = %f, iou = %f\n' % (cl, per_class_acc[i], per_class_iou[i]))
+
+
 main()
