@@ -21,8 +21,6 @@ parser.add_argument("--caffemodel_dir", type=str, default='./scripts/eval_citysc
 parser.add_argument("--gpu_id", type=int, default=0, help="Which gpu id to use")
 parser.add_argument("--split", type=str, default='val', help="Data split to be evaluated")
 parser.add_argument("--save_output_images", type=int, default=0, help="Whether to save the FCN output images")
-parser.add_argument("--ground_truth", type=int, default=0,
-                    help="Whether this is a ground truth comparison and images should be center cropped like the training images")
 parser.add_argument("--fcn_input_size", type=int, default=710,
                     help="The (square) size images will be cropped to before they are fed into the FCN")
 args = parser.parse_args()
@@ -59,9 +57,15 @@ def main():
         # Ground truth: center crop like is done to generated imgs
         size_1 = 286
         size_2 = 256
-        im = imresize(im, (size_1, size_1))
         cc_d = (size_1 - size_2) // 2
-        im = im[cc_d:-cc_d, cc_d:-cc_d]
+        if im.shape == (1024, 2048, 3):
+            im = imresize(im, (size_1, size_1))
+            im = im[cc_d:-cc_d, cc_d:-cc_d]
+        elif im.shape == (256, 256, 3):
+            pass  # im already correct size: do nothing
+        else:
+            print(f"Unrecognized image size {im.shape}")
+            exit(1)
 
         # Center crop label with same proportion
         cc_d_l_y = int(cc_d * label.shape[1] / size_2)
